@@ -55,16 +55,16 @@ func coordinatorSock() string {
 	return s
 }
 
-func tmpMapOutFile(worker string, mapIndex int, reduceIndex int) string {
-	return fmt.Sprintf("tmp-worker-%s-%d-%d", worker, mapIndex, reduceIndex)
+func tmpMapOutFile(workerID string, mapIndex int, reduceIndex int) string {
+	return fmt.Sprintf("tmp-worker-%s-%d-%d", workerID, mapIndex, reduceIndex)
 }
 
 func finalMapOutFile(mapIndex int, reduceIndex int) string {
 	return fmt.Sprintf("mr-%d-%d", mapIndex, reduceIndex)
 }
 
-func tmpReduceOutFile(worker string, reduceIndex int) string {
-	return fmt.Sprintf("tmp-worker-%s-out-%d", worker, reduceIndex)
+func tmpReduceOutFile(workerID string, reduceIndex int) string {
+	return fmt.Sprintf("tmp-worker-%s-out-%d", workerID, reduceIndex)
 }
 
 func finalReduceOutFile(reduceIndex int) string {
