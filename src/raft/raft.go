@@ -49,6 +49,12 @@ type ApplyMsg struct {
 	SnapshotIndex int
 }
 
+type LogEntry struct {
+	Id      int
+	Command string
+	Term    int
+}
+
 // A Go object implementing a single Raft peer.
 type Raft struct {
 	mu        sync.Mutex          // Lock to protect shared access to this peer's state
@@ -64,6 +70,14 @@ type Raft struct {
 	// 2A
 	currentTerm int
 	votedFor    int
+	commitIndex int
+	lastApplied int
+	nextIndex   []int
+	matchIndex  []int
+	logEntry    []LogEntry
+	isLeader    bool
+
+	receivedRPC bool
 }
 
 // return currentTerm and whether this server
@@ -72,6 +86,8 @@ func (rf *Raft) GetState() (int, bool) {
 
 	var term int
 	var isleader bool
+	term = rf.currentTerm
+	isleader = rf.isLeader
 	// Your code here (2A).
 	return term, isleader
 }
@@ -127,17 +143,25 @@ func (rf *Raft) Snapshot(index int, snapshot []byte) {
 // field names must start with capital letters!
 type RequestVoteArgs struct {
 	// Your data here (2A, 2B).
+	Term         int
+	CandidateId  int
+	LastLogIndex int
+	LastLogTerm  int
 }
 
 // example RequestVote RPC reply structure.
 // field names must start with capital letters!
 type RequestVoteReply struct {
 	// Your data here (2A).
+	Term        int
+	VoteGranted bool
 }
 
 // example RequestVote RPC handler.
-func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
+func (rf *Raft) RequestVote(server int, args *RequestVoteArgs, reply *RequestVoteReply) bool {
 	// Your code here (2A, 2B).
+	ok := rf.peers[server].Call("Raft.RequestVote", args, reply)
+	return ok
 }
 
 // example code to send a RequestVote RPC to a server.
@@ -217,11 +241,49 @@ func (rf *Raft) ticker() {
 	for rf.killed() == false {
 
 		// Your code here (2A)
+		if !rf.isLeader {
+			if !rf.receivedRPC {
+				// leader died, it's my term now
+				// Increment my term
+				rf.currentTerm++
+				// vote for myself
+				rf.votedFor = rf.me
+				nums := len(rf.peers)
+				majority := 1
+
+				args := new(RequestVoteArgs)
+				args.Term = rf.currentTerm
+				args.CandidateId = rf.me
+				args.LastLogIndex = len(rf.logEntry) - 1
+				args.LastLogTerm = rf.logEntry[len(rf.logEntry)-1].Term
+				for i := 0; i < len(rf.peers); i++ {
+					if i != rf.me {
+						reply := new(RequestVoteReply)
+						rf.RequestVote(i, args, reply)
+						if reply.VoteGranted {
+							majority++
+						} else {
+							if reply.Term > rf.currentTerm {
+								rf.currentTerm = reply.Term
+							}
+						}
+					}
+				}
+				if majority*2 > nums {
+					// I won the majority
+					rf.isLeader = true
+				}
+			} else {
+
+			}
+		} else {
+
+		}
 		// Check if a leader election should be started.
 
 		// pause for a random amount of time between 50 and 350
 		// milliseconds.
-		ms := 50 + (rand.Int63() % 300)
+		ms := 200 + (rand.Int63() % 300)
 		time.Sleep(time.Duration(ms) * time.Millisecond)
 	}
 }
