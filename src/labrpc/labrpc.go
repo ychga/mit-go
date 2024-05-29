@@ -448,12 +448,12 @@ func MakeService(rcvr interface{}) *Service {
 	svc.rcvr = reflect.ValueOf(rcvr)
 	svc.name = reflect.Indirect(svc.rcvr).Type().Name()
 	svc.methods = map[string]reflect.Method{}
-
+	//log.Printf("labrpc.MakeService(): typ:%v, rcvr:%v name:%v methods:%v\n", svc.typ.NumMethod(), svc.rcvr, svc.name, svc.methods)
 	for m := 0; m < svc.typ.NumMethod(); m++ {
 		method := svc.typ.Method(m)
 		mtype := method.Type
 		mname := method.Name
-
+		//log.Printf("method:%v, mtype:%v mname:%v\n", method, mtype, mname)
 		//fmt.Printf("%v pp %v ni %v 1k %v 2k %v no %v\n",
 		//	mname, method.PkgPath, mtype.NumIn(), mtype.In(1).Kind(), mtype.In(2).Kind(), mtype.NumOut())
 

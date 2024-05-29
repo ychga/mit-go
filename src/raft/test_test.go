@@ -8,7 +8,10 @@ package raft
 // test with the original before submitting.
 //
 
-import "testing"
+import (
+	"log"
+	"testing"
+)
 import "fmt"
 import "time"
 import "math/rand"
@@ -137,7 +140,7 @@ func TestBasicAgree2B(t *testing.T) {
 			t.Fatalf("some have committed before Start()")
 		}
 
-		xindex := cfg.one(index*100, servers, false)
+		xindex := cfg.one(index*100, servers, true) //set retry==true
 		if xindex != index {
 			t.Fatalf("got index %v but expected %v", xindex, index)
 		}
@@ -155,7 +158,7 @@ func TestRPCBytes2B(t *testing.T) {
 
 	cfg.begin("Test (2B): RPC byte count")
 
-	cfg.one(99, servers, false)
+	cfg.one(99, servers, true) //set retry==true
 	bytes0 := cfg.bytesTotal()
 
 	iters := 10
@@ -172,6 +175,7 @@ func TestRPCBytes2B(t *testing.T) {
 	bytes1 := cfg.bytesTotal()
 	got := bytes1 - bytes0
 	expected := int64(servers) * sent
+	log.Printf("In TestRPCBytes2B RPC bytes: got %v, expected %v", got, expected)
 	if got > expected+50000 {
 		t.Fatalf("too many RPC bytes; got %v, expected %v", got, expected)
 	}
@@ -887,6 +891,7 @@ func TestUnreliableAgree2C(t *testing.T) {
 	cfg.end()
 }
 
+// passed by ignoring out of date RPC replys and speeding up applying command in followers
 func TestFigure8Unreliable2C(t *testing.T) {
 	servers := 5
 	cfg := make_config(t, servers, true, false)

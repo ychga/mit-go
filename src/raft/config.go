@@ -153,6 +153,7 @@ func (cfg *config) checkLogs(i int, m ApplyMsg) (string, bool) {
 	if m.CommandIndex > cfg.maxIndex {
 		cfg.maxIndex = m.CommandIndex
 	}
+	//log.Printf("in checkLogs: cfg.logs %v\n", cfg.logs)
 	return err_msg, prevok
 }
 
@@ -552,6 +553,10 @@ func (cfg *config) wait(index int, n int, startTerm int) interface{} {
 // times, in case a leader fails just after Start().
 // if retry==false, calls Start() only once, in order
 // to simplify the early Lab 2B tests.
+// But set retry==false is not correct, Start() method does not guarantee
+// that the command will be committed by all raft nodes. It may be lost
+// because the current leader may not have time to send it to the majority
+// after receiving the command.
 func (cfg *config) one(cmd interface{}, expectedServers int, retry bool) int {
 	t0 := time.Now()
 	starts := 0
